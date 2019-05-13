@@ -1,0 +1,105 @@
+/*
+ * @author Tony Yang
+ * @date September 24, 2018
+ * @description test class
+ * @log:
+ *  -----------------------------------------------------------------------------
+ *  Developer           Date        Description
+ *  -----------------------------------------------------------------------------
+ *  Tony Yang       2018-09-24  RTC1634299 - Newly created 
+ */
+@istest
+private class OpportunityExecutiveSponsorReassignTest {
+    private static testmethod void test() {
+        APTS_QTCTestDataFactory.createSysDefaultsCS();
+
+        Account oAccount = APTS_QTCTestDataFactory.createAccount('Guest Acct');
+        Id acctId = oAccount.Id;
+        Contact oContact = APTS_QTCTestDataFactory.createContact(acctId);
+        User au = [select LastName from User where Profile.Name = 'Sellers' and IsActive = true limit 1];
+        User u = [select LastName from User where Profile.Name = 'Sellers' limit 1];
+        
+        Pricebook2 pb = APTS_QTCTestDataFactory.createPriceBook();
+
+        Opportunity opp = APTS_QTCTestDataFactory.createOpportunity(acctId, pb.Id);
+        opp.Primary_Contact__c = oContact.Id;
+        opp.Meeting_Date__c = Date.today();
+        upsert(opp);
+        
+        ApexPages.StandardController std = new ApexPages.StandardController(opp);
+        Test.startTest();
+        Test.setCurrentPage(Page.OpportunityBUExecutiveSponsorReassign);
+        System.runas(au) { 
+            OpportunityExecutiveSponsorReassign oesr = new OpportunityExecutiveSponsorReassign (std);
+            oesr.sponsorType = 'IBM';
+            oesr.doSearch();
+            oesr.userSearchKeyword = 'something_that_will_never_be_found';
+            oesr.doSearch();
+            System.assert(oesr.searchResults.isEmpty());
+        
+            oesr.searchResults.add(new OpportunityExecutiveSponsorReassign.UserRecord(u));
+            oesr.searchResults[0].selected = true;
+            oesr.reassignExecutiveSponsor();        
+        }
+        Test.stopTest();
+    }
+    private static testmethod void test2() {
+        APTS_QTCTestDataFactory.createSysDefaultsCS();
+
+        Account oAccount = APTS_QTCTestDataFactory.createAccount('Guest Acct');
+        Id acctId = oAccount.Id;
+        Contact oContact = APTS_QTCTestDataFactory.createContact(acctId);
+        
+        User u = [select LastName from User where Profile.Name = 'IBM API Users Only' limit 1];
+        User au = [select LastName from User where Profile.Name = 'IBM API Users Only' and IsActive = true limit 1];
+        Pricebook2 pb = APTS_QTCTestDataFactory.createPriceBook();
+
+        Opportunity opp = APTS_QTCTestDataFactory.createOpportunity(acctId, pb.Id);
+        opp.Primary_Contact__c = oContact.Id;
+        opp.Meeting_Date__c = Date.today();
+        upsert(opp);
+        
+        ApexPages.StandardController std = new ApexPages.StandardController(opp);
+        Test.startTest();
+        Test.setCurrentPage(Page.OpportunityBUExecutiveSponsorReassign);
+        OpportunityExecutiveSponsorReassign oesr= new OpportunityExecutiveSponsorReassign (std);
+        oesr.sponsorType = 'BU';
+        oesr.doSearch();
+        oesr.userSearchKeyword = 'something_that_will_never_be_found';
+        oesr.doSearch();
+        System.assert(oesr.searchResults.isEmpty());
+    
+        oesr.searchResults.add(new OpportunityExecutiveSponsorReassign.UserRecord(u));
+        oesr.searchResults[0].selected = true;
+        oesr.reassignExecutiveSponsor();
+        Test.stopTest();
+    }
+    
+    private static testmethod void test3() {
+        APTS_QTCTestDataFactory.createSysDefaultsCS();
+
+        Account oAccount = APTS_QTCTestDataFactory.createAccount('Guest Acct');
+        Id acctId = oAccount.Id;
+        Contact oContact = APTS_QTCTestDataFactory.createContact(acctId);
+        
+        User u = [select LastName from User where Profile.Name = 'Seller - IBM Read All' limit 1];
+        User au = [select LastName from User where Profile.Name = 'Seller - IBM Read All' and IsActive = true limit 1];
+        
+        Pricebook2 pb = APTS_QTCTestDataFactory.createPriceBook();
+
+        Opportunity opp = APTS_QTCTestDataFactory.createOpportunity(acctId, pb.Id);
+        opp.Primary_Contact__c = oContact.Id;
+        opp.Meeting_Date__c = Date.today();
+        upsert(opp);
+        
+        ApexPages.StandardController std = new ApexPages.StandardController(opp);
+        Test.startTest();
+        Test.setCurrentPage(Page.OpportunityBUExecutiveSponsorReassign);
+        OpportunityExecutiveSponsorReassign oesr= new OpportunityExecutiveSponsorReassign (std);
+        oesr.sponsorType = 'BU';
+        oesr.doDelete();
+        System.assert(opp.IsDeleted);
+        Test.stopTest();
+    }
+    
+}
